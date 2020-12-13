@@ -86,6 +86,7 @@ class TestFlaskApp(unittest.TestCase):
     for i in range(100000):
       t = create_new_key()
       self.assertFalse(test_dict.get(t))
+      test_dict[t] = True
   
   @patch("server.create_new_key")
   @patch("server.get_current_time")

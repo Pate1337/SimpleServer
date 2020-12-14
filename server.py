@@ -4,6 +4,10 @@ import secrets
 import time
 
 app = Flask(__name__)
+
+"""
+Store the data in two dictionaries for fast and easy access.
+"""
 url_key_dict = {} # { "url": "key" }
 key_url_dict = {} # { "key": { "url": "url", "created_at": "created_at" } }
 prefix = "http://localhost/"
@@ -63,7 +67,15 @@ def get_original_url():
 
 
 def create_new_key_url_pair(url):
+  """
+  Returns a new unique key for the given url.
+  Adds the key and url to the corresponding dictionaries.
+
+  This function makes sure, that the keys created are unique.
+  """
   key = create_new_key()
+  while key_url_dict.get(key):
+    key = create_new_key()
   url_key_dict[url] = key
   key_url_dict[key] = create_new_url_object(url)
   return key

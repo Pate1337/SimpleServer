@@ -1,5 +1,5 @@
 import re
-from server import app, create_new_key, get_current_time, get_key_from_url, is_valid_shortened_url, is_valid_url, key_url_dict, prefix, url_key_dict
+from server import app, create_new_key, create_new_key_url_pair, get_current_time, get_key_from_url, is_valid_shortened_url, is_valid_url, key_url_dict, prefix, url_key_dict
 import unittest
 from unittest.mock import patch
 
@@ -82,11 +82,33 @@ class TestFlaskApp(unittest.TestCase):
       self.assertFalse(is_valid_shortened_url(u))
   
   def test_tokens_are_unique(self):
+    """
+    This test does not assure that the keys are unique.
+    It only gives a hint to the programmer, in case this test fails.
+    """
     test_dict = {}
     for i in range(100000):
       t = create_new_key()
       self.assertFalse(test_dict.get(t))
       test_dict[t] = True
+  
+  @patch("server.create_new_key")
+  @patch("server.get_current_time")
+  def test_create_new_key_url_pair_returns_unique_key_and_updates_dictonaries(self, get_current_time, create_new_key):
+    create_new_key.side_effect = [keys[0], keys[0], keys[1]]
+    get_current_time.side_effect = [1000, 1001]
+    with patch.dict(url_key_dict, {}, clear=True):
+      with patch.dict(key_url_dict, {}, clear=True):
+        create_new_key_url_pair("https://hiqfinland.fi/avoimet-tyopaikat/")
+        create_new_key_url_pair("https://youtube.com")
+        self.assertEqual(url_key_dict, {
+          "https://hiqfinland.fi/avoimet-tyopaikat/": keys[0],
+          "https://youtube.com": keys[1]
+        })
+        self.assertEqual(key_url_dict, {
+          keys[0]: { "url": "https://hiqfinland.fi/avoimet-tyopaikat/", "created_at": 1000 },
+          keys[1]: { "url": "https://youtube.com", "created_at": 1001 }
+        })
   
   @patch("server.create_new_key")
   @patch("server.get_current_time")
